@@ -2,8 +2,27 @@ import requests
 from bs4 import BeautifulSoup
 
 # Búsqueda de los datos de Masa y Radio.
-def Planet_Data(Mass, Radium, VolcanicActivity, HasMagneticField):
-    return;
+def Planet_Data(soup):  
+    rows = soup.find_all('tr')
+
+    # Dato de Masa (predeterminado C2 y F5)
+    fila_5 = rows [4]
+    columna_fila_5 = fila_5.find_all('td')
+    Mass = columna_fila_5[1].text.strip()
+
+    # Dato de Radio (predeterminado C2 y F4)
+    fila_4 = rows [3]
+    columna_fila_4 = fila_4.find_all('td')
+    Radium = columna_fila_4[1].text.strip()
+
+    # Datos del sistema volcánico
+    VolcanicActivity = soup.find('td', text='Volcanic Activity').find_next('td').text.strip()
+    if not VolcanicActivity:
+        VolcanicActivity = 0
+        print("No se han encontrado datos.") 
+
+    
+    return Planet_Data
 
 # Datos Adicionales
 def Planet_Data2(RotationPeriod, AxisStability):
@@ -32,6 +51,16 @@ def Gas_Levels(CO2, CH4):
 def Stellar(Activity, DistanceFromStar, StarType, InHabitableZone):
     return;
 
+
+# Unifica los def´s anteriores.
+def Datos_Detallados():
+    return;
+
+
+
+
+
+
 #Llamo a todos los datos obtenidos por los def anteriores,
 #los ordena en una tupla almacena en un SQLite
 def Datos_Recopilados():
@@ -54,7 +83,7 @@ if response.status_code == 200:
 # A continuacion se crea una funcion la cual tendrá como propósito poder extraer
 #  los Datos Detallados de los ExoPlanetas.
 
-    def Datos_Detallados(link):   # Funcion DatosDetallados con un parámetro "link"
+    def PlanetList(link):   # Funcion DatosDetallados con un parámetro "link"
         url_detalles = url_detalles(link)    # Variable que almacena los detalles de los links.
         respuesta_detalles = requests.get(respuesta_detalles)   # Se le da la peticion al HTML con un requests.get y los datos se almacenan dentro de respuesta_detalles
         soup_detalles = BeautifulSoup(respuesta_detalles.text, 'html.parser')  # Se genera una variable soup que almacenara los datos de respuesta_detalles y se trabaja el HTML como parser.
@@ -74,17 +103,28 @@ if response.status_code == 200:
         return datos_detallados
 
     # Imprimir las primeras 10 filas
-    for index, row in enumerate(rows[4:13], 1):
+    for index, row in enumerate(rows[4:5], 1):
         # Encuentra todas las celdas en la fila
         cells = row.find_all('td')
         # Extrae el texto de cada celda
         cell_data = [cell.get_text(strip=True) for cell in cells[:2]]
         # Imprime los datos de la fila
-        print(f"Fila {index}: {cell_data}")
+        
+        
+        # Rearmado de links
+        link = cells[1].find('a')['href'] #Genero una variable que analiza los datos de celda 1 y busca href que el faltante del link.
+        link = link.lstrip('./')
+        base_url =  'https://www.exoplanetkyoto.org/exohtml'
+        url_com = base_url + '/' +  link
 
-    
+        print(f"Fila {index}: {cell_data}: {url_com}")
+        print(Planet_Data(base_url))
+
+
+
 else:
     print('Error al acceder a la página')
 
 
 
+                    
