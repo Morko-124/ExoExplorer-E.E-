@@ -1,70 +1,104 @@
 import requests
 from bs4 import BeautifulSoup
 
-# Búsqueda de los datos de Masa y Radio.
-def Planet_Data(soup):  
-    rows = soup.find_all('tr')
+class Planet:
+    def __init__(self, soup):
+        self.soup = soup
+        self.mass, self.radium, self.volcanic_activity = self.get_planet_data()
+        self.rotation_period, self.axis_stability, self.magnetic_field = self.get_dynamics_data()
+        self.composition, self.radiation_levels = self.get_atmospheric_data()
+        self.blackbody1, self.blackbody2, self.blackbody3, self.media = self_get_temperatura()
+        self.estimated_orbital_period, self.orbital_type, self_eccentricity = self_orbital_data()
+        self.tidally_locked_blackbody_T01, self.tidally_locked_blackbody_T02 = self_tidally_locked()
+        self.water, self.o2 = self.get_essentials()
+        self.co2, self.ch4 = self.get_gas_levels()
+        self.stellar_activity, self.diostance_from_star, self.star_type, self.in_habitable_zone = self.get_stellar_data()
 
-    # Dato de Masa (predeterminado C2 y F5)
-    fila_5 = rows [4]
-    columna_fila_5 = fila_5.find_all('td')
-    Mass = columna_fila_5[1].text.strip()
+    def get_planet_data(self):  
+        rows = soup.find_all('tr')
 
-    # Dato de Radio (predeterminado C2 y F4)
-    fila_4 = rows [3]
-    columna_fila_4 = fila_4.find_all('td')
-    Radium = columna_fila_4[1].text.strip()
+        mass = rows[4].find_all('td')[1].text.strip()
+        radium = rows[3].find_all('td')[1].text.strip()
+        volcanic_activity = soup.find('td', text='Volcanic Activity').find_next('td').text.strip()
+        if not volcanic_activity:
+            volcanic_activity = 'None'
+            print('Desconocido')
 
-    # Datos del sistema volcánico
-    VolcanicActivity = soup.find('td', text='Volcanic Activity').find_next('td').text.strip()
-    if not VolcanicActivity:
-        VolcanicActivity = 0
-        print("No se han encontrado datos.") 
+        return  mass, radium, volcanic_activity
 
-    
-    return Planet_Data
+    # Datos Adicionales
 
-# Datos Adicionales
-def Planet_Data2(RotationPeriod, AxisStability):
-    return;
+    def dynamics_data(self):
+        rotation_period = soup.find('td', text='Rotation Period').find_next('td').text.strip()
+        if rotation_period:
+            rotation_period
+        else: 
+            print('Desconocido')
 
-# Datos Atmosféricos
-def Atmospheric_Data(Composition, RadiationLevels):
-    return;
-#Temperatura superficial del planeta en cuestión los datos son obtenido con Blackbody.           
-def Temperature(BlackBody1, BlackBody2, BlackBody3, media):
-    return ;
+        axis_stability = soup.find('td', text= 'Axis Stability').find_next('td').text.strip()
+        if not axis_stability:
+            axis_stability = 'None'
+            print('Desconocido')
+            
+        magnetic_field = soup.find('td', text = 'Magnetic Field').find_next('td').text.strip()
+        if not magnetic_field:
+            magnetic_field = 'None'
+            print('Desconocido')
 
-# Datos Orbitales
-def Orbital(Estimated, OrbitalType, Eccentricity):
-    return ;
+        return rotation_period, axis_stability, magnetic_field;
 
-# Datos Esenciales para la vida.          
-def Essentials(Water, O2):
-    return ;
+    # Datos Atmosféricos
+    def atmospheric_data(self):
+        composition = soup.find('td',text='Size Class').find_next('td').text.strip()
+        if composition == 'Super-Jupiter-size' or 'Jupiter-size':
+            composition = 'Gas Planet'
+        else:
+            composition = 'Rocky-Planet'
 
-# Niveles de Gas.
-def Gas_Levels(CO2, CH4):
-    return ;
-
-#Datos Estelares
-def Stellar(Activity, DistanceFromStar, StarType, InHabitableZone):
-    return;
-
-
-# Unifica los def´s anteriores.
-def Datos_Detallados():
-    return;
+        radiation_levels_td = soup.find('td', text = 'Star Radiation at Atmospheric Boundary').find_next('td').text.strip()
+        radiation_levels = radiation_levels_td + ' (W/m2)'
+        
+        return composition, radiation_levels
 
 
+    #Temperatura superficial del planeta en cuestión los datos son obtenido con Blackbody.           
+    def Temperature(BlackBody1, BlackBody2, BlackBody3, media):
+        BlackBody1 = soup.find('td', text='Blackbody T 0.1(K)').find_next('td').text.strip()
 
 
 
 
-#Llamo a todos los datos obtenidos por los def anteriores,
-#los ordena en una tupla almacena en un SQLite
-def Datos_Recopilados():
-    return
+        return ;
+
+
+    # Datos Orbitales
+    def Orbital(Estimated, OrbitalType, Eccentricity):
+        return ;
+
+
+    # Datos Esenciales para la vida.          
+    def Essentials(Water, O2):
+        return ;
+
+    # Niveles de Gas.
+    def Gas_Levels(CO2, CH4):
+        return ;
+
+    #Datos Estelares
+    def Stellar(Activity, DistanceFromStar, StarType, InHabitableZone):
+        return;
+
+
+    # Unifica los def´s anteriores.
+    def Datos_Detallados():
+        return;
+
+
+
+    #Llamo a todos los datos obtenidos por los def anteriores,
+    #los ordena en una tupla almacena en un SQLite
+    def Datos_Recopilados():
+        return
 
 
 url = 'https://www.exoplanetkyoto.org/exohtml/A_All_Exoplanets.html'
@@ -118,9 +152,7 @@ if response.status_code == 200:
         url_com = base_url + '/' +  link
 
         print(f"Fila {index}: {cell_data}: {url_com}")
-        print(Planet_Data(base_url))
-
-
+     
 
 else:
     print('Error al acceder a la página')
