@@ -13,7 +13,7 @@ class Planet:
         self.tidally_locked_blackbody_T01, self.tidally_locked_blackbody_T02 = self.get_tidally_locked()
         self.water, self.o2 = self.get_essentials()
         self.co2, self.ch4 = self.get_gas_levels()
-        self.stellar_activity, self.diostance_from_star, self.star_type, self.in_habitable_zone = self.get_stellar_data()
+        self.name, self.star_type, self.distance_from_star, self.star_radiation, self.stellar_activity, self.in_habitable_zone = self.get_stellar_data()
 
     def get_planet_data(self):  
         rows = soup.find_all('tr')
@@ -96,7 +96,7 @@ class Planet:
         return orbital_period, eccentricity, orbital_type
 
     #Datos Estelares
-    def Stellar(soup):
+    def get_stellar_data(soup):
         star_name = soup.find('td', text = 'Star Name :	'.find_next('td')).text.strip()
         #Tipo de Estrella.
         star_type_complete = soup.find('td', text = 'Spectral type :'.find_text('td')).text.strip()
@@ -169,7 +169,7 @@ class Planet:
     def Gas_Levels(CO2, CH4):
         return ;
     
-    
+
     # Unifica los def´s anteriores.
     def Datos_Detallados():
         return;
