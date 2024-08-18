@@ -1,4 +1,5 @@
 import requests
+import math
 from bs4 import BeautifulSoup
 
 class Planet:
@@ -7,9 +8,9 @@ class Planet:
         self.mass, self.radium, self.volcanic_activity = self.get_planet_data()
         self.rotation_period, self.axis_stability, self.magnetic_field = self.get_dynamics_data()
         self.composition, self.radiation_levels = self.get_atmospheric_data()
-        self.blackbody1, self.blackbody2, self.blackbody3, self.media = self_get_temperatura()
-        self.estimated_orbital_period, self.orbital_type, self_eccentricity = self_orbital_data()
-        self.tidally_locked_blackbody_T01, self.tidally_locked_blackbody_T02 = self_tidally_locked()
+        self.blackbody1, self.blackbody2, self.blackbody3, self.media = self.get_temperature()
+        self.observed_orbital_period, self.estimated_orbital_period, self.orbital_type, self.eccentricity = self.get_orbital_data()
+        self.tidally_locked_blackbody_T01, self.tidally_locked_blackbody_T02 = self.get_tidally_locked()
         self.water, self.o2 = self.get_essentials()
         self.co2, self.ch4 = self.get_gas_levels()
         self.stellar_activity, self.diostance_from_star, self.star_type, self.in_habitable_zone = self.get_stellar_data()
@@ -28,7 +29,7 @@ class Planet:
 
     # Datos Adicionales
 
-    def dynamics_data(self):
+    def get_dynamics_data(self):
         rotation_period = soup.find('td', text='Rotation Period').find_next('td').text.strip()
         if rotation_period:
             rotation_period
@@ -48,7 +49,7 @@ class Planet:
         return rotation_period, axis_stability, magnetic_field;
 
     # Datos Atmosféricos
-    def atmospheric_data(self):
+    def get_atmospheric_data(self):
         composition = soup.find('td',text='Size Class').find_next('td').text.strip()
         if composition == 'Super-Jupiter-size' or 'Jupiter-size':
             composition = 'Gas Planet'
@@ -62,20 +63,104 @@ class Planet:
 
 
     #Temperatura superficial del planeta en cuestión los datos son obtenido con Blackbody.           
-    def Temperature(BlackBody1, BlackBody2, BlackBody3, media):
-        BlackBody1 = soup.find('td', text='Blackbody T 0.1(K)').find_next('td').text.strip()
-
-
-
-
-        return ;
-
+    def get_temperature(self):
+        blackBody1 = float(soup.find('td', text='Blackbody T 0.1(K)').find_next('td').text.strip())
+        blackBody2 = float(soup.find('td', text = "Blackbody T 0.3(K)").find_next('td').text.strip())
+        blackBody3 = float(soup.find('td', text = 'Blackbody T 0.7(K)').find_next('td').text.strip())
+        media = (blackBody1 + blackBody2 + blackBody3)/3
+        media_s = media + 'K'
+        return media_s
 
     # Datos Orbitales
-    def Orbital(Estimated, OrbitalType, Eccentricity):
-        return ;
+    def get_orbital_data(self):
+        orbital_period = float(soup.find('td', text ='Orbital Period(Observed/Estimated)'.find_next('td')).text.strip())
+        if orbital_period == '0.0':
+            estimated_orbital_period_days = float(soup.find('td', text = '(Days Obs.)'.find_next('td')).text.strip())
+            estimated_orbital_period = estimated_orbital_period_days/365.2425
+            estimated_orbital_period = round(estimated_orbital_period,4)
+            orbital_period = estimated_orbital_period + ('Estimado')
+        elif orbital_period != 0.0:
+            new_orbital_period = orbital_period / 365.2425
+            orbital_period = new_orbital_period + (' Años')
+
+        eccentricity = soup.find('td', text ='Eccentricity :'.find_next('td')).text.strip()
+        if 0.0 <= eccentricity <= 0.1:
+            orbital_type = 'Casi Circular'
+        elif 0.1 <= eccentricity <= 0.5:
+            orbital_type = 'Moderado'
+        elif 0.5 <= eccentricity <= 1:
+            orbital_type = 'Muy Elíptica'
+        elif eccentricity >= 1:
+            orbital_type = 'Hiperbólica'
+
+        return orbital_period, eccentricity, orbital_type
+
+    #Datos Estelares
+    def Stellar(soup):
+        star_name = soup.find('td', text = 'Star Name :	'.find_next('td')).text.strip()
+        #Tipo de Estrella.
+        star_type_complete = soup.find('td', text = 'Spectral type :'.find_text('td')).text.strip()
+        star_type = star_type_complete[0]
+        
+        distance_from_star_n = round(float(soup.find('td', text='Semi Major Axis / Orbital Distance Calculated	').find_next('td').text.strip()), 4)
+        distance_from_star = distance_from_star_n + " UA."
+
+        # Radiacion de Estrella>
+        star_radiation_n = round(float(soup.find('td', text = 'Star Radiation at Atmospheric Boundary:').find_next('td').text.strip()),4)
+        star_radiation = star_radiation_n + ' (W/m2)'
 
 
+        if 1 > star_radiation_n:
+            stellar_activity = 'Very Low'
+        elif 1 < star_radiation_n < 3:
+            stellar_activity = 'Low'
+        elif 3 < stellar_activity < 10:
+            stellar_activity = 'Moderate'
+        elif stellar_activity > 10:
+            stellar_activity = 'High'
+
+# --------------------------------------------------------------------------------------------------
+
+        ### Calculo de Zona Habitable se buscan las variables necesarias dentro de la tabla:
+        # Stellar Radius
+        # Stellar Mass
+        # star_temperature
+        # distance_from_star.
+
+        # Constantes
+        sigma = 5.67e-8  # Constante de Stefan-Boltzmann en W/m^2K^4
+        R_sun = 6.96e8  # Radio del sol en metros
+        L_sun = 3.828e26  # Luminosidad del sol en Watts
+
+        # Variables
+        stellar_radius = float(soup.find('td', text = 'Stellar Radius(Rsun) :'.find_next('td')).text.strip())
+        stellar_mass = float(soup.find('td', text = 'Stellar Mass(Msun) :'.find_next('td')).text.strip())
+        star_temperature = float(soup.find('td', text = 'Temperature :'.find_next('td')).text.strip())
+
+        # Radio de la Estrella a Metros
+        stellar_radius_metters = stellar_radius * R_sun
+
+        # Luminosidad Stefan-Boltzmann.
+        star_luminocity = 4 * math.pi * (stellar_radius_metters ** 2) * sigma * (star_temperature ** 4)
+
+        # Luminosidad a unidades solares.
+        star_luminocity_sun = star_luminocity/L_sun
+
+        # Limites de zona habitable en UA
+        inner_habitable_zone = math.sqrt(star_luminocity_sun/1.1)
+        outer_habitable_zone = math.sqrt(star_luminocity_sun/0.53)
+
+        if inner_habitable_zone <= distance_from_star_n <= outer_habitable_zone:
+            in_habitable_zone = True
+        else: 
+            in_habitable_zone = False
+       
+        return star_name, star_type, distance_from_star, star_radiation, stellar_activity, in_habitable_zone
+
+# --------------------------------------------------------------------------------------------------
+
+    def get_tidally_locked(soup):
+        return;
     # Datos Esenciales para la vida.          
     def Essentials(Water, O2):
         return ;
@@ -83,12 +168,8 @@ class Planet:
     # Niveles de Gas.
     def Gas_Levels(CO2, CH4):
         return ;
-
-    #Datos Estelares
-    def Stellar(Activity, DistanceFromStar, StarType, InHabitableZone):
-        return;
-
-
+    
+    
     # Unifica los def´s anteriores.
     def Datos_Detallados():
         return;
