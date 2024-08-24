@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 class Planet:
     def __init__(self, soup):
         self.soup = soup
-        self.mass, self.radium, self.volcanic_activity = self.get_planet_data()
+        self.j_mass, self.e_mass, self.j_radius, self.e_radium, self.volcanic_activity = self.get_planet_data()
         self.rotation_period, self.axis_stability, self.magnetic_field = self.get_dynamics_data()
         self.composition, self.radiation_levels = self.get_atmospheric_data()
         self.blackbody1, self.blackbody2, self.blackbody3, self.media = self.get_temperature()
@@ -18,14 +18,17 @@ class Planet:
     def get_planet_data(self):  
         rows = soup.find_all('tr')
 
-        mass = rows[4].find_all('td')[1].text.strip()
-        radium = rows[3].find_all('td')[1].text.strip()
+        j_mass = rows[4].find_all('td')[1].text.strip()
+        j_radius = rows[3].find_all('td')[1].text.strip()
+        e_mass = float(soup.find('td', text = '(Rjup)	').find_next('td').text.strip())
+        e_radius = float(soup.find('td', text = '(Mjup)	').find_next('td').text.strip()) 
+        
         volcanic_activity = soup.find('td', text='Volcanic Activity').find_next('td').text.strip()
         if not volcanic_activity:
             volcanic_activity = 'None'
             print('Desconocido')
 
-        return  mass, radium, volcanic_activity
+        return  j_mass, e_mass, j_radius, e_radius, volcanic_activity
 
     # Datos Adicionales
 
@@ -70,7 +73,7 @@ class Planet:
         media = (blackBody1 + blackBody2 + blackBody3)/3
         media_s = media + 'K'
         return media_s
-
+            
     # Datos Orbitales
     def get_orbital_data(self):
         orbital_period = float(soup.find('td', text ='Orbital Period(Observed/Estimated)'.find_next('td')).text.strip())
@@ -96,71 +99,194 @@ class Planet:
         return orbital_period, eccentricity, orbital_type
 
     #Datos Estelares
-    def get_stellar_data(soup):
-        star_name = soup.find('td', text = 'Star Name :	'.find_next('td')).text.strip()
-        #Tipo de Estrella.
-        star_type_complete = soup.find('td', text = 'Spectral type :'.find_text('td')).text.strip()
-        star_type = star_type_complete[0]
-        
-        distance_from_star_n = round(float(soup.find('td', text='Semi Major Axis / Orbital Distance Calculated	').find_next('td').text.strip()), 4)
-        distance_from_star = distance_from_star_n + " UA."
+def get_stellar_data(soup):
+    # Datos Estelares
+    star_name = soup.find('td', text='Star Name :').find_next('td').text.strip()
+    
+    # Tipo de Estrella
+    star_type_complete = soup.find('td', text='Spectral type :').find_next('td').text.strip()
+    star_type = star_type_complete[0]
+    
+    # Distancia desde la Estrella
+    distance_from_star_n = round(float(soup.find('td', text='Semi Major Axis / Orbital Distance Calculated').find_next('td').text.strip()), 4)
+    distance_from_star = f"{distance_from_star_n} UA."
+    
+    # Radiación de la Estrella
+    star_radiation_n = round(float(soup.find('td', text='Star Radiation at Atmospheric Boundary:').find_next('td').text.strip()), 4)
+    star_radiation = f"{star_radiation_n} (W/m²)"
+    
+    # Actividad Estelar
+    if star_radiation_n <= 1:
+        stellar_activity = 'Very Low'
+    elif 1 < star_radiation_n <= 3:
+        stellar_activity = 'Low'
+    elif 3 < star_radiation_n <= 10:
+        stellar_activity = 'Moderate'
+    else:
+        stellar_activity = 'High'
 
-        # Radiacion de Estrella>
-        star_radiation_n = round(float(soup.find('td', text = 'Star Radiation at Atmospheric Boundary:').find_next('td').text.strip()),4)
-        star_radiation = star_radiation_n + ' (W/m2)'
-
-
-        if 1 > star_radiation_n:
-            stellar_activity = 'Very Low'
-        elif 1 < star_radiation_n < 3:
-            stellar_activity = 'Low'
-        elif 3 < stellar_activity < 10:
-            stellar_activity = 'Moderate'
-        elif stellar_activity > 10:
-            stellar_activity = 'High'
-
-# --------------------------------------------------------------------------------------------------
-
-        ### Calculo de Zona Habitable se buscan las variables necesarias dentro de la tabla:
-        # Stellar Radius
-        # Stellar Mass
-        # star_temperature
-        # distance_from_star.
-
-        # Constantes
-        sigma = 5.67e-8  # Constante de Stefan-Boltzmann en W/m^2K^4
-        R_sun = 6.96e8  # Radio del sol en metros
-        L_sun = 3.828e26  # Luminosidad del sol en Watts
-
-        # Variables
-        stellar_radius = float(soup.find('td', text = 'Stellar Radius(Rsun) :'.find_next('td')).text.strip())
-        stellar_mass = float(soup.find('td', text = 'Stellar Mass(Msun) :'.find_next('td')).text.strip())
-        star_temperature = float(soup.find('td', text = 'Temperature :'.find_next('td')).text.strip())
-
-        # Radio de la Estrella a Metros
-        stellar_radius_metters = stellar_radius * R_sun
-
-        # Luminosidad Stefan-Boltzmann.
-        star_luminocity = 4 * math.pi * (stellar_radius_metters ** 2) * sigma * (star_temperature ** 4)
-
-        # Luminosidad a unidades solares.
-        star_luminocity_sun = star_luminocity/L_sun
-
-        # Limites de zona habitable en UA
-        inner_habitable_zone = math.sqrt(star_luminocity_sun/1.1)
-        outer_habitable_zone = math.sqrt(star_luminocity_sun/0.53)
-
-        if inner_habitable_zone <= distance_from_star_n <= outer_habitable_zone:
-            in_habitable_zone = True
-        else: 
-            in_habitable_zone = False
-       
-        return star_name, star_type, distance_from_star, star_radiation, stellar_activity, in_habitable_zone
 
 # --------------------------------------------------------------------------------------------------
+    # Cálculo de la Zona Habitable
+    ### Calculo de Zona Habitable se buscan las variables necesarias dentro de la tabla:
+    # Stellar Radius
+    # Stellar Mass
+    # star_temperature
+    # distance_from_star.
 
-    def get_tidally_locked(soup):
-        return;
+    # Constantes
+    sigma = 5.67e-8  # Constante de Stefan-Boltzmann en W/m²K⁴
+    R_sun = 6.96e8  # Radio del Sol en metros
+    L_sun = 3.828e26  # Luminosidad del Sol en Watts
+
+    # Variables
+    stellar_radius = float(soup.find('td', text='Stellar Radius (Rsun) :').find_next('td').text.strip())
+    star_temperature = float(soup.find('td', text='Temperature :').find_next('td').text.strip())
+
+    # Radio de la Estrella en Metros
+    stellar_radius_meters = stellar_radius * R_sun
+
+    # Luminosidad usando la fórmula de Stefan-Boltzmann
+    star_luminosity = 4 * math.pi * (stellar_radius_meters ** 2) * sigma * (star_temperature ** 4)
+
+    # Luminosidad en unidades solares
+    star_luminosity_sun = star_luminosity / L_sun
+
+    # Límites de la zona habitable en UA
+    inner_habitable_zone = math.sqrt(star_luminosity_sun / 1.1)
+    outer_habitable_zone = math.sqrt(star_luminosity_sun / 0.53)
+
+    # Determinación de si el exoplaneta está en la zona habitable
+    in_habitable_zone = inner_habitable_zone <= distance_from_star_n <= outer_habitable_zone
+
+    return star_name, star_type, distance_from_star, star_radiation, stellar_activity, in_habitable_zone;
+
+# --------------------------------------------------------------------------------------------------
+def get_tidally_locked(self, soup):
+    # Constantes:
+    jupiter_mass = 1
+    jupiter_radius = 1
+    jupiter_radius_m = 7.1492e7
+    AU = 1.496e11  # Unidad Astronómica en metros
+    jupiter_density = 1
+    saturn_mass = 0.3
+    saturn_radius = 0.9
+    saturn_density = 0.7
+    earth_mass = 0.01
+    earth_radius = 0.1
+    earth_density = 1.1
+    super_earth_mass = 0.02
+    super_earth_radius = 0.2
+    G = 6.67430e-11  # Constante gravitacional en m^3 kg^−1 s^−2
+    M_sun = 1.989e30  # Masa del Sol en kg
+
+    # Datos del planeta
+    mass_p = float(self.j_mass)  # Masa del planeta en masas de Júpiter
+    radius_p = float(self.j_radius)  # Radio del planeta en radios de Júpiter
+    eccentricity = float(self.eccentricity)  # Excentricidad orbital
+    periodo_orbital = float(self.orbital_period)  # Período orbital en días
+    semi_mayor_axis = float(self.distance_from_star.split()[0])  # Semi-eje mayor en UA
+    rotation = float(self.rotation_period.split()[0])  # Período de rotación en horas
+
+    # Datos estelares
+    stellar_mass = float(soup.find('td', text='Stellar Mass (Msun) :').find_next('td').text.strip())
+    stellar_radius = float(soup.find('td', text='Stellar Radius (Rsun) :').find_next('td').text.strip())
+    stellar_temperature = float(soup.find('td', text='Temperature :').find_next('td').text.strip())
+
+    # Conversiones
+    j_m_k = 1.898 * 10**27  # Masa de Júpiter en kg
+    j_r_m = 7.1482 * 10**7  # Radio de Júpiter en metros
+
+    mass_p_k = mass_p * j_m_k
+    radius_p_m = radius_p * j_r_m
+    volumen = (4/3) * math.pi * radius_p_m**3
+    density = mass_p_k / volumen
+
+    m_star_kg = stellar_mass * M_sun
+
+    # Calcular el tiempo sincrónico
+    k = 1  # Valor estándar inicial
+    t_sync = ((k * stellar_radius**2 * stellar_mass * periodo_orbital**2))**(1/3)
+
+    # Ajuste del valor de k según la masa, radio y densidad del planeta
+    if (mass_p > jupiter_mass and radius_p >= jupiter_radius) or (mass_p > jupiter_mass and density > jupiter_density) or (mass_p == jupiter_mass):
+        k = 0.51
+    elif (mass_p <= saturn_mass and radius_p > saturn_radius) or (density < saturn_density):
+        k = 0.39
+    elif (mass_p <= earth_mass and radius_p <= earth_radius and density <= earth_density):
+        k = 0.30
+    elif (mass_p > earth_mass and mass_p <= super_earth_mass and radius_p > earth_radius and radius_p <= super_earth_radius):
+        k = 0.35
+    else:
+        k = 0.35
+
+    t_sync = ((k * stellar_radius**2 * stellar_mass * periodo_orbital**2))**(1/3)
+
+    if semi_mayor_axis <= t_sync:
+        base = "Possible tidal locking"
+    elif t_sync <= 10:
+        base = "Within the gravitational influence of the star"
+    elif t_sync <= 50:
+        base = 'Gravitational influence of its star; moderate'
+    else:
+        base = 'Far from gravitational influence.'
+
+    # Cálculo del factor Q utilizando el calentamiento mareal
+    P_diss_min = 1e13  # Potencia disipada mínima estimada en vatios
+    P_diss_max = 1e18  # Potencia disipada máxima estimada en vatios
+    
+    Q_min, Q_max = self.calcular_factor_Q(stellar_mass, radius_p, semi_mayor_axis, eccentricity, P_diss_min, P_diss_max)
+
+    # Determinación de la probabilidad de anclaje por marea
+    if Q_min > 1e6:
+        probabilidad_anclaje = "Low probability of tidal locking"
+    elif Q_max < 1e4:
+        probabilidad_anclaje = "High probability of tidal locking"
+    else:
+        probabilidad_anclaje = "Medium probability of tidal locking"
+
+    return base, probabilidad_anclaje
+
+def calcular_factor_Q(self, M_star, R_planet, a, eccentricity, P_diss_min, P_diss_max):
+    """ Calcula el factor de calidad Q usando el calentamiento mareal. """
+
+    # Constantes
+    G = 6.67430e-11  # Constante gravitacional en m^3 kg^−1 s^−2
+    M_sun = 1.989e30  # Masa del Sol en kg
+    R_jup = 7.1492e7  # Radio de Júpiter en metros
+    AU = 1.496e11  # Unidad Astronómica en metros
+
+    # Convertir a unidades correctas
+    M_star_kg = M_star * M_sun  # Masa de la estrella en kg
+    R_planet_m = R_planet * R_jup  # Radio del planeta en metros
+    a_m = a * AU  # Semi-eje mayor en metros
+
+    # Calcular el factor Q para el rango de potencia disipada
+    Q_min = (63 / 4) * ((G * M_star_kg)**(3/2)) * (R_planet_m**5) * eccentricity / (P_diss_max * a_m**(15/2))
+    Q_max = (63 / 4) * ((G * M_star_kg)**(3/2)) * (R_planet_m**5) * eccentricity / (P_diss_min * a_m**(15/2))
+
+    # Interpretación de los resultados
+    if Q_min < 10**5:
+        q_min_interpretation = "High probability of tidal locking"
+    elif 10**5 <= Q_min < 10**7:
+        q_min_interpretation = "Medium probability of tidal locking"
+    else:
+        q_min_interpretation = "Low probability of tidal locking"
+
+    if Q_max < 10**5:
+        q_max_interpretation = "High probability of tidal locking"
+    elif 10**5 <= Q_max < 10**7:
+        q_max_interpretation = "Medium probability of tidal locking"
+    else:
+        q_max_interpretation = "Low probability of tidal locking"
+
+    # Imprimir interpretaciones para el rango de Q
+    print(f"Minimum Q factor: {Q_min} - Interpretation: {q_min_interpretation}")
+    print(f"Maximum Q factor:  {Q_max} - Interpretation: {q_max_interpretation}")
+
+    return Q_min, Q_max
+
+
     # Datos Esenciales para la vida.          
     def Essentials(Water, O2):
         return ;
@@ -180,6 +306,8 @@ class Planet:
     #los ordena en una tupla almacena en un SQLite
     def Datos_Recopilados():
         return
+    
+
 
 
 url = 'https://www.exoplanetkyoto.org/exohtml/A_All_Exoplanets.html'
