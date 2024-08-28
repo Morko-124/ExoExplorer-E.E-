@@ -86,11 +86,11 @@ def get_orbital_data(self):
         estimated_orbital_period_days = float(self.soup.find('td', text='(Days Obs.)').find_next('td').text.strip())
         estimated_orbital_period_years = estimated_orbital_period_days / 365.2425
         estimated_orbital_period = round(estimated_orbital_period_years, 4)
-        orbital_period = f"{estimated_orbital_period} years (Estimated)"
+        orbital_period = estimated_orbital_period
     else:
         # Convertir el período orbital observado a años terrestres.
         orbital_period_years = orbital_period / 365.2425
-        orbital_period = f"{orbital_period_years:.4f} years"
+        orbital_period = orbital_period_years
 
     # Obtener y convertir la excentricidad
     eccentricity_text = self.soup.find('td', text='Eccentricity :').find_next('td').text.strip()
@@ -221,20 +221,16 @@ def get_tidally_locked(self, soup):
     stellar_radius = float(soup.find('td', text='Stellar Radius (Rsun) :').find_next('td').text.strip())
     stellar_temperature = float(soup.find('td', text='Temperature :').find_next('td').text.strip())
 
-    # Conversiones
+    # Conversión a unidades 
     j_m_k = 1.898 * 10**27  # Masa de Júpiter en kg
     j_r_m = 7.1482 * 10**7  # Radio de Júpiter en metros
 
-    mass_p_k = mass_p * j_m_k
+    mass_p_kg = mass_p * j_m_k
     radius_p_m = radius_p * j_r_m
     volumen = (4/3) * math.pi * radius_p_m**3
-    density = mass_p_k / volumen
+    density = mass_p_kg / volumen
 
     m_star_kg = stellar_mass * M_sun
-
-    # Calcular el tiempo sincrónico
-    k = 1  # Valor estándar inicial
-    t_sync = ((k * stellar_radius**2 * stellar_mass * periodo_orbital**2))**(1/3)
 
     # Ajuste del valor de k según la masa, radio y densidad del planeta
     if (mass_p > jupiter_mass and radius_p >= jupiter_radius) or (mass_p > jupiter_mass and density > jupiter_density) or (mass_p == jupiter_mass):
@@ -248,6 +244,7 @@ def get_tidally_locked(self, soup):
     else:
         k = 0.35
 
+    # Calcular el tiempo sincrónico
     t_sync = ((k * stellar_radius**2 * stellar_mass * periodo_orbital**2))**(1/3)
 
     if semi_mayor_axis <= t_sync:
@@ -262,7 +259,7 @@ def get_tidally_locked(self, soup):
     # Cálculo del factor Q utilizando el calentamiento mareal
     P_diss_min = 1e13  # Potencia disipada mínima estimada en vatios
     P_diss_max = 1e18  # Potencia disipada máxima estimada en vatios
-    
+
     Q_min, Q_max = self.calcular_factor_Q(stellar_mass, radius_p, semi_mayor_axis, eccentricity, P_diss_min, P_diss_max)
 
     # Determinación de la probabilidad de anclaje por marea
@@ -273,7 +270,7 @@ def get_tidally_locked(self, soup):
     else:
         probabilidad_anclaje = "Medium probability of tidal locking"
 
-    return base, probabilidad_anclaje
+    return t_sync, base, probabilidad_anclaje
 
 def calcular_factor_Q(self, M_star, R_planet, a, eccentricity, P_diss_min, P_diss_max):
     """ Calcula el factor de calidad Q usando el calentamiento mareal. """
@@ -295,29 +292,25 @@ def calcular_factor_Q(self, M_star, R_planet, a, eccentricity, P_diss_min, P_dis
 
     # Interpretación de los resultados
     if Q_min < 10**5:
-        q_min_interpretation = "High probability of tidal locking"
+        q_min_interpretation = "High energy dissipation; possible significant internal heating."
     elif 10**5 <= Q_min < 10**7:
-        q_min_interpretation = "Medium probability of tidal locking"
+        q_min_interpretation = "Moderate energy dissipation; moderate geological activity or internal heat."
     else:
-        q_min_interpretation = "Low probability of tidal locking"
+        q_min_interpretation = "Low energy dissipation; likely a rigid body with little to no tidal activity."
 
     if Q_max < 10**5:
-        q_max_interpretation = "High probability of tidal locking"
+        q_max_interpretation = "High energy dissipation; extreme tidal heating conditions."
     elif 10**5 <= Q_max < 10**7:
-        q_max_interpretation = "Medium probability of tidal locking"
+        q_max_interpretation = "Moderate energy dissipation; potential for mild to moderate geological activity."
     else:
-        q_max_interpretation = "Low probability of tidal locking"
+        q_max_interpretation = "Low energy dissipation; stable internal structure, with little to no tide-induced activity."
 
-    # Imprimir interpretaciones para el rango de Q
-    print(f"Minimum Q factor: {Q_min} - Interpretation: {q_min_interpretation}")
-    print(f"Maximum Q factor:  {Q_max} - Interpretation: {q_max_interpretation}")
+    return Q_min, q_min_interpretation, Q_max, q_max_interpretation
 
-    return Q_min, Q_max
-
-
+    
     # Datos Esenciales para la vida.          
-    def Essentials(Water, O2):
-        return ;
+def Essentials(Water, O2):
+    return ;
 
     # Niveles de Gas.
     def Gas_Levels(CO2, CH4):
