@@ -1405,32 +1405,6 @@ class DataValue:
             habitability_score.calculate_score()
         )
 
-
-
     def get_data(self):
         return self.data
 
-
-
-# # Prueba de código
-url = 'https://www.exoplanetkyoto.org/exohtml/BD-00_4475_b.html'
-
-
-response = requests.get(url)
-
-if response.status_code == 200:
-    soup = BeautifulSoup(response.content, 'html.parser')
-    print('Se entró al URL')
-
-    planeta = Planet(soup)
-    print("\n--- Datos del planeta ---")
-    planeta.show_data()
-    habitability_score = Habitability_Score(planeta)
-    score = habitability_score.calculate_score()
-    print(f"Habitability Score: {score}")
-
-
-
-
-else:
-    print(f"Error al acceder a la página: {response.status_code}")

@@ -2,13 +2,14 @@ import sqlite3
 from exoplanet import DataValue, Planet, Habitability_Score
 import requests
 from bs4 import BeautifulSoup
+import json 
 
 try:
     connection = sqlite3.connect('Data/ExoExplore_DB.db')
     print('Connection established.')
     cursor = connection.cursor()
 
-    # Corrección en la definición de la tabla
+    # Crear la tabla si no existe
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS ExoPlanets (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,6 +26,7 @@ try:
                 Blackbody_T_01_K REAL, 
                 Blackbody_T_03_K REAL,  
                 Blackbody_T_07_K REAL,		
+                Average_Temperature REAL,
                 Orbital_Period_Yrs REAL, 
                 Orbital_Period_Observed_Days REAL, 
                 Orbital_Period_Estimated_Days REAL, 
@@ -55,10 +57,16 @@ try:
 
     # Función para insertar datos en la base de datos
     def insert_planet_data(data):
+        # Se convierte los datos de "Composition" a una cadena JSON.
+        data = list(data)
+        data [8] = json.dumps(data[8]) # Se convierte el campo Composition (indice 8) a Json
+        data = tuple(data)
+
+        # Se pasan los datos.
         cursor.execute('''
         INSERT INTO ExoPlanets (
             Name, Jupiter_Mass, Earths_Mass, Jupiters_Radius, Earths_Radius, Rotation_Period, Axial_Stability, 
-            Size_Class, Composition, Radiation_Levels, Blackbody_T_01_K, Blackbody_T_03_K, Blackbody_T_07_K, 
+            Size_Class, Composition, Radiation_Levels, Blackbody_T_01_K, Blackbody_T_03_K, Blackbody_T_07_K, Average_Temperature, 
             Orbital_Period_Yrs, Orbital_Period_Observed_Days, Orbital_Period_Estimated_Days, Eccentricity, 
             Orbital_Type, Star_Name, Star_Type, Distance_From_Star, Star_Radiation_Atmospheric_Boundary, 
             Stellar_Activity, Located_in_Habitable_Zone, Sync_Time, Star_Influence, Tidal_Locking_Probability, 
@@ -66,12 +74,11 @@ try:
             Interpretation_of_Maximum_Quality_Factor_Q, Uncertainty_Factor_Oxygen_Probability, Gravity, 
             Uncertainty_Factor_Magnetic_Field, Uncertainty_Factor_Atmospheric_Pressure, Volcanic_Activity, 
             Uncertainty_Factor_Water_Presence_Probability, Habitability_Score
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', data)
         connection.commit()
         print('Datos insertados exitosamente.')
 
-    # Prueba con un planeta
     url = 'https://www.exoplanetkyoto.org/exohtml/AB_Aur_b.html'
     response = requests.get(url)
 
