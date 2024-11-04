@@ -1,0 +1,87 @@
+{
+    "O": {
+      "0": "Extreme",
+      "1": "Extreme",
+      "2": "Extreme",
+      "3": "Extreme",
+      "4": "Very High",
+      "5": "Very High",
+      "6": "Very High",
+      "7": "Very High",
+      "8": "High",
+      "9": "High"
+    },
+    "B": {
+      "0": "Very High",
+      "1": "Very High",
+      "2": "Very High",
+      "3": "High",
+      "4": "High",
+      "5": "Moderate-High",
+      "6": "Moderate-High",
+      "7": "Moderate",
+      "8": "Moderate",
+      "9": "Moderate"
+    },
+    "A": {
+      "0": "Moderate",
+      "1": "Moderate",
+      "2": "Moderate",
+      "3": "Moderate",
+      "4": "Moderate-Low",
+      "5": "Moderate-Low",
+      "6": "Low",
+      "7": "Low",
+      "8": "Low",
+      "9": "Very Low"
+    },
+    "F": {
+      "0": "Moderate",
+      "1": "Moderate",
+      "2": "Moderate",
+      "3": "Moderate",
+      "4": "Moderate-Low",
+      "5": "Moderate-Low",
+      "6": "Low",
+      "7": "Low",
+      "8": "Low",
+      "9": "Very Low"
+    },
+    "G": {
+      "0": "Moderate",
+      "1": "Moderate",
+      "2": "Moderate",
+      "3": "Moderate",
+      "4": "Moderate-Low",
+      "5": "Moderate-Low",
+      "6": "Low",
+      "7": "Low",
+      "8": "Low",
+      "9": "Very Low"
+    },
+    "K": {
+      "0": "Moderate-Low",
+      "1": "Moderate-Low",
+      "2": "Moderate-Low",
+      "3": "Moderate-Low",
+      "4": "Low",
+      "5": "Low",
+      "6": "Low",
+      "7": "Low",
+      "8": "Very Low",
+      "9": "Very Low"
+    },
+    "M": {
+      "0": "Moderate-Low",
+      "1": "Moderate-Low",
+      "2": "Moderate-Low",
+      "3": "Low",
+      "4": "Low",
+      "5": "Low",
+      "6": "Very Low",
+      "7": "Very Low",
+      "8": "Very Low",
+      "9": "Very Low"
+    }
+  }
+  
