@@ -5,7 +5,7 @@ ExoExplorer is an exoplanet analysis and visualization project that combines ast
 Main Features
 
 - Planetary Data Query:
-Access detailed information about exoplanets by star system using data obtained from NASA's Exoplanet Archive API.
+Access detailed information about exoplanets by star system using data obtained from Exoplanet Kyoto Archive database.
 Perform queries and visualize data interactively.
 
 - Habitability Analysis:
@@ -14,7 +14,6 @@ Present the results clearly in the user interface.
 
 - Data Visualization:
 Offer an animated visualization of exoplanets, showing their rotation and key data about each one.
-
 
 ## License
 This project is licensed under the GPL 3.0 License - see the [LICENSE](LICENSE) file for details.
